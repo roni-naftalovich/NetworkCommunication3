@@ -38,17 +38,41 @@ int main() {
         return -1;
     }
 
+    struct sockaddr_in receiver_addr;
+    receiver_addr.sin_family = AF_INET;
+    receiver_addr.sin_port = htons(SENDER_PORT);
+    receiver_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
+
     // Specify the address and port of the server to connect
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(SENDER_PORT);
     server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Assuming localhost
 
-    // Connect to server
-    if (connect(tcp_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("Connection failed");
+    // bind
+    if (bind(tcp_socket, (struct sockaddr *)&receiver_addr, sizeof(receiver_addr)) < 0) {
+        perror("Reciever Connection failed");
         close(tcp_socket);
         return -1;
     }
+
+     int yes = 1;
+     if(setsockopt(tcp_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1){
+     printf("setsockopt");
+     close(tcp_socket);
+     return -1;
+}
+
+   //listen
+   if(listen(tcp_socket,30) <0){
+    printf("Listening failed");
+    close(tcp_socket);
+   }
+
+   //accept
+   if(accept(tcp_socket,(struct sockaddr *)&server_addr, sizeof(server_addr)) < 0){
+    printf("Accepting failed");
+    close(tcp_socket);
+   }
 
     // Send data
     int bytes_sent = 0;
