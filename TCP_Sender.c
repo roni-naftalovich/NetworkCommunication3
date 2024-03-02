@@ -11,8 +11,13 @@
 #define RECEIVER_IP "127.0.0.1"
 #define RECEIVER_PORT 9998
 #define BUFFER_SIZE 2048
-#define SIZE_OF_FILE 2097152
+#define SIZE_OF_FILE 2000000
 #define EXIT_MESSAGE "EXIT"
+
+
+
+
+
 
 char *util_generate_random_data(unsigned int size) {
     char *buffer = (char *)malloc(size);
@@ -27,7 +32,11 @@ char *util_generate_random_data(unsigned int size) {
 }
 
 int main() {
+    //char* dataBuffer = NULL //this is a buffer area for saving the file's data that we can read from
     char *data = util_generate_random_data(SIZE_OF_FILE);
+
+    //Let's start with reading the file content and save it into the dataBuffer
+
 
     // Create TCP socket
     int tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -44,19 +53,24 @@ int main() {
 }
 
 
-    struct sockaddr_in server_addr;
-    memset(&server_addr,0,sizeof(server_addr));
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(RECEIVER_PORT); 
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Assuming localhost
+    struct sockaddr_in sender_addr;
+    memset(&sender_addr,0,sizeof(sender_addr));
+    sender_addr.sin_family = AF_INET;
+    sender_addr.sin_port = htons(RECEIVER_PORT); 
+    //sender_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Assuming localhost
+    socklen_t adresslen = sizeof(sender_addr);
 
-    
+    if (inet_pton(AF_INET, RECEIVER_IP, &sender_addr.sin_addr) <= 0)
+    {
+        printf("inet_pton() problem");
+        close(tcp_socket);
+        return -1;
+    }
 
-    // Specify the address and port of the receiver
     
 
     // Connect to the receiver
-    if (connect(tcp_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
+    if (connect(tcp_socket, (struct sockaddr *)&sender_addr, adresslen) < 0) {
         printf("Connection failed");
         exit(EXIT_FAILURE);
     }
@@ -71,7 +85,7 @@ int main() {
         printf("Sending data failed");
         return -1;
     }
-    else if (bytes_sent< SIZE_OF_FILE){
+    else if (bytes_sent >= 0 && bytes_sent< SIZE_OF_FILE){
        printf("Sent only part of the data");
     }
     else{

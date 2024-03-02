@@ -11,25 +11,12 @@
 #define SENDER_PORT 9997
 #define RECEIVER_PORT 9998
 #define BUFFER_SIZE 2048
-#define SIZE_OF_FILE 2097152
+#define SIZE_OF_FILE 2000000
 
-char *util_generate_random_data(unsigned int size) {
-    char *buffer = NULL;
-    if (size == 0)
-        return NULL;
-    buffer = (char *)calloc(size, sizeof(char));
-    if (buffer == NULL)
-        return NULL;
-    srand(time(NULL));
-    for (unsigned int i = 0; i < size; i++)
-        *(buffer + i) = ((unsigned int)rand() % 256);
-    return buffer;
-}
 
 int main() {
-    char *data = util_generate_random_data(SIZE_OF_FILE);
+    //char *data = util_generate_random_data(SIZE_OF_FILE);
     int tcp_socket;
-    struct sockaddr_in server_addr;
 
     // Create socket
     tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -43,10 +30,7 @@ int main() {
     receiver_addr.sin_port = htons(SENDER_PORT);
     receiver_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
-    // Specify the address and port of the server to connect
-    server_addr.sin_family = AF_INET;
-    server_addr.sin_port = htons(SENDER_PORT);
-    server_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Assuming localhost
+    
 
     // bind
     if (bind(tcp_socket, (struct sockaddr *)&receiver_addr, sizeof(receiver_addr)) < 0) {
@@ -63,38 +47,56 @@ int main() {
 }
 
    //listen
-   if(listen(tcp_socket,30) <0){
+   if(listen(tcp_socket,1) <0){
     printf("Listening failed");
     close(tcp_socket);
    }
+   printf("the client waiting for TCP connection\n");
 
+    
+    
    //accept
-   if(accept(tcp_socket,(struct sockaddr *)&server_addr, sizeof(server_addr)) < 0){
+   // Specify the address and port of the server to connect
+   struct sockaddr_in sender_addr;
+   memset(&sender_addr,0,sizeof(sender_addr));
+   socklen_t sender_addr_len = sizeof(sender_addr);
+   int sender_socket= accept(tcp_socket,(struct sockaddr *)&sender_addr, ( socklen_t *)&sender_addr_len);
+   if(sender_socket < 0){
     printf("Accepting failed");
     close(tcp_socket);
+    return -1;
    }
 
-    // Send data
-    int bytes_sent = 0;
-    int total_bytes_sent = 0;
-    int len = SIZE_OF_FILE;
-
-    while (total_bytes_sent < len) {
-        bytes_sent = send(tcp_socket, data + total_bytes_sent, BUFFER_SIZE, 0);
-        if (bytes_sent < 0) {
-            perror("Sending data failed");
+   printf("Connection established with the sender.\n");
+char infobuffer[BUFFER_SIZE]= {0};
+   int bytes_received= 0;
+   clock_t start_time = clock(); // Start measuring time
+    while (bytes_received < SIZE_OF_FILE) {
+        int bytes = recv(sender_socket, infobuffer, BUFFER_SIZE, 0);
+        if (bytes < 0) {
+            printf("Receiving data failed");
+            close(sender_socket);
             close(tcp_socket);
             return -1;
         }
-        total_bytes_sent += bytes_sent;
+        bytes_received += bytes;
     }
+    clock_t end_time = clock();
+   
+ // Calculate the time taken to receive the file
+    double time_taken = ((double)(end_time - start_time)) / CLOCKS_PER_SEC;
+    printf("Time taken to receive the file: %.2f seconds\n", time_taken);
 
-    // Close the TCP connection
+    // Calculate average bandwidth
+    double average_bandwidth = (SIZE_OF_FILE / time_taken) / 1024; // in KB/s
+    printf("Average bandwidth: %.2f KB/s\n", average_bandwidth);
+
+    // Close the sockets
+    close(sender_socket);
     close(tcp_socket);
 
     // Free allocated memory
-    free(data);
+    //free(infobuffer);
 
-    // Exit
     return 0;
 }
