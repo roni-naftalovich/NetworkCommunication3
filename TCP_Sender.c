@@ -11,6 +11,7 @@
 #define RECEIVER_IP "127.0.0.1"
 #define RECEIVER_PORT 9998
 #define BUFFER_SIZE 2048
+#define DEFAULT_ALGO "reno"
 #define SIZE_OF_FILE 2000000
 #define EXIT_MESSAGE "EXIT"
 
@@ -31,12 +32,66 @@ char *util_generate_random_data(unsigned int size) {
     return buffer;
 }
 
-int main() {
+int main(int argsc, char **argsv) {
     //char* dataBuffer = NULL //this is a buffer area for saving the file's data that we can read from
-    char *data = util_generate_random_data(SIZE_OF_FILE);
+    unsigned int data_size = 3*1024*1024;
+    char *data = util_generate_random_data(data_size);
+  
+    
+    char *tcp_algo = DEFAULT_ALGO;
+    char *ip_address = RECEIVER_IP;
+    int port_Address = SENDER_PORT;
 
-    //Let's start with reading the file content and save it into the dataBuffer
-
+    if (argsc <= 1)
+    {
+        // no arguments
+    }
+    else
+    {
+        int i = 1;
+        while (i < argsc)
+        {
+            char *arg = argsv[i];
+            if (strcmp(arg, "-p") == 0)
+            {
+                i++;
+                if (i == argsc)
+                {
+                    // error empty arg
+                }
+                else
+                {
+                    port_Address = atoi(argsv[i]);
+                }
+            }
+            else if (strcmp(arg, "-ip") == 0)
+            {
+                i++;
+                if (i == argsc)
+                {
+                    // error empty arg
+                }
+                else
+                {
+                    ip_address = argsv[i];
+                }
+            }
+            else if (strcmp(arg, "-algo") == 0)
+            {
+                i++;
+                if (i == argsc)
+                {
+                    // error empty arg
+                }
+                else
+                {
+                    // check if value is reno or cubic
+                    tcp_algo = argsv[i];
+                }
+            }
+            i++;
+        }
+    }
 
     // Create TCP socket
     int tcp_socket = socket(AF_INET, SOCK_STREAM, 0);
@@ -56,7 +111,7 @@ int main() {
     struct sockaddr_in sender_addr;
     memset(&sender_addr,0,sizeof(sender_addr));
     sender_addr.sin_family = AF_INET;
-    sender_addr.sin_port = htons(RECEIVER_PORT); 
+    sender_addr.sin_port = htons(SENDER_PORT); 
     //sender_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Assuming localhost
     socklen_t adresslen = sizeof(sender_addr);
 
@@ -71,7 +126,7 @@ int main() {
 
     // Connect to the receiver
     if (connect(tcp_socket, (struct sockaddr *)&sender_addr, adresslen) < 0) {
-        printf("Connection failed");
+        perror("Connection failed");
         exit(EXIT_FAILURE);
     }
 
@@ -89,7 +144,7 @@ int main() {
        printf("Sent only part of the data");
     }
     else{
-        printf("data sent");
+        printf("data sent\n");
      }
      printf("press 1 to send again or 0 to exit:\n");
      scanf("%d", &sending);
@@ -97,6 +152,7 @@ int main() {
 
     // Send exit message
     send(tcp_socket, EXIT_MESSAGE, strlen(EXIT_MESSAGE), 0);
+    printf("exit massage sent\n");
 
     // Close the connection
     close(tcp_socket);

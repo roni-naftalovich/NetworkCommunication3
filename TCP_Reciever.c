@@ -41,17 +41,17 @@ int main() {
 
      int yes = 1;
      if(setsockopt(tcp_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1){
-     printf("setsockopt");
+     perror("setsockopt");
      close(tcp_socket);
      return -1;
 }
 
    //listen
-   if(listen(tcp_socket,1) <0){
+   if(listen(tcp_socket, 1) <0){
     printf("Listening failed");
     close(tcp_socket);
    }
-   printf("the client waiting for TCP connection\n");
+   printf("Reciever waiting for TCP connection\n");
 
     
     
@@ -60,8 +60,8 @@ int main() {
    struct sockaddr_in sender_addr;
    memset(&sender_addr,0,sizeof(sender_addr));
    socklen_t sender_addr_len = sizeof(sender_addr);
-   int sender_socket= accept(tcp_socket,(struct sockaddr *)&sender_addr, ( socklen_t *)&sender_addr_len);
-   if(sender_socket < 0){
+   int client_socket= accept(tcp_socket,(struct sockaddr *)&sender_addr, ( socklen_t *)&sender_addr_len);
+   if(client_socket < 0){
     printf("Accepting failed");
     close(tcp_socket);
     return -1;
@@ -72,10 +72,10 @@ char infobuffer[BUFFER_SIZE]= {0};
    int bytes_received= 0;
    clock_t start_time = clock(); // Start measuring time
     while (bytes_received < SIZE_OF_FILE) {
-        int bytes = recv(sender_socket, infobuffer, BUFFER_SIZE, 0);
+        int bytes = recv(client_socket, infobuffer, BUFFER_SIZE, 0);
         if (bytes < 0) {
             printf("Receiving data failed");
-            close(sender_socket);
+            close(client_socket);
             close(tcp_socket);
             return -1;
         }
@@ -92,7 +92,7 @@ char infobuffer[BUFFER_SIZE]= {0};
     printf("Average bandwidth: %.2f KB/s\n", average_bandwidth);
 
     // Close the sockets
-    close(sender_socket);
+    close(client_socket);
     close(tcp_socket);
 
     // Free allocated memory
