@@ -5,6 +5,7 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <time.h>
 
 #define SENDER_PORT 9997
@@ -16,7 +17,13 @@
 #define EXIT_MESSAGE "EXIT"
 
 
-
+void util_read_file(const char *filename, unsigned int *size) {
+    FILE *file;
+    file = fopen(filename, "r");
+    if (file== NULL) {
+        printf("Error opening file %s\n", filename);
+    }
+}
 
 
 
@@ -36,6 +43,7 @@ int main(int argsc, char **argsv) {
     //char* dataBuffer = NULL //this is a buffer area for saving the file's data that we can read from
     unsigned int data_size = 3*1024*1024;
     char *data = util_generate_random_data(data_size);
+    util_read_file(data, &data_size);
   
     
     char *tcp_algo = DEFAULT_ALGO;
@@ -107,15 +115,22 @@ int main(int argsc, char **argsv) {
      return -1;
 }
 
+if (setsockopt(tcp_socket, IPPROTO_TCP, TCP_CONGESTION, tcp_algo, strlen(tcp_algo)) != 0) {
+    printf("Failed to set TCP congestion control algorithm\n");
+    close(tcp_socket);
+    free(data);
+    return -1;
+}
+
 
     struct sockaddr_in sender_addr;
     memset(&sender_addr,0,sizeof(sender_addr));
     sender_addr.sin_family = AF_INET;
-    sender_addr.sin_port = htons(SENDER_PORT); 
+    sender_addr.sin_port = htons(port_Address); 
     //sender_addr.sin_addr.s_addr = inet_addr("127.0.0.1"); // Assuming localhost
     socklen_t adresslen = sizeof(sender_addr);
 
-    if (inet_pton(AF_INET, RECEIVER_IP, &sender_addr.sin_addr) <= 0)
+    if (inet_pton(AF_INET, ip_address, &sender_addr.sin_addr) <= 0)
     {
         printf("inet_pton() problem");
         close(tcp_socket);
@@ -132,7 +147,7 @@ int main(int argsc, char **argsv) {
 
     int sending = 1;
 
-    while(sending){
+    while(sending==1){
 
     // Send the file
     int bytes_sent = send(tcp_socket, data, SIZE_OF_FILE, 0);
@@ -148,6 +163,7 @@ int main(int argsc, char **argsv) {
      }
      printf("press 1 to send again or 0 to exit:\n");
      scanf("%d", &sending);
+     
     }
 
     // Send exit message
