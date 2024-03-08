@@ -85,7 +85,7 @@ int main(int args, char** argv){
     }
     printf("data sent successfully!\n");
     while (1){
-        printf("Press 1 to resend the data or 0 to exit\n");
+        printf("Press 1 to resend file or 0 to exit\n");
         int choice;
         if(scanf("%d", &choice)<0){
             perror("scanf(2)");
@@ -109,7 +109,7 @@ int main(int args, char** argv){
                 rudp_close(sock);
                 return -1;
             }
-            printf("data sent successfully!\n");
+            printf("file sent successfully!\n");
             bytes_sent=0;
         }
     }

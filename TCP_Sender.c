@@ -146,53 +146,48 @@ if (setsockopt(tcp_socket, IPPROTO_TCP, TCP_CONGESTION, tcp_algo, strlen(tcp_alg
         exit(EXIT_FAILURE);
     }
 
-    int sending = 1;
-    long bytes_sent;
-    while(sending==1){
 
     //Send the file
-     bytes_sent = send(tcp_socket, data, SIZE_OF_FILE, 0);
-     if (bytes_sent < 0) {
-         printf("Sending data failed");
-         return -1;
-     }
-     else if (bytes_sent >= 0 && bytes_sent< SIZE_OF_FILE){
-        printf("Sent only part of the data\n");
-     }
-     else{
-         printf("data sent\n");
-     }
-     int input= -1;
-     while(input){
-     printf("Press 1 to resend the data or 0 to exit\n");
-     scanf("%d", &input);
+    long bytes_sent = send(tcp_socket, data, SIZE_OF_FILE, 0);
+    if (bytes_sent <= 0) {
+        perror("send(2)");
+        close(tcp_socket);
+        free(data);
 
-     if (input ==0)
-     {
-        send(tcp_socket, EXIT_MESSAGE, strlen(EXIT_MESSAGE), 0);
-        printf("exit message sent to receiver\n");
-        break;
-     }
-     else if(input==1){
-        printf("Resending data\n");
-        bytes_sent = send(tcp_socket, data, SIZE_OF_FILE, 0);
-        if (bytes_sent < 0) {
-        printf("Sending data failed");
-        return -1;
-        }else{printf("data resent succesfully\n");
+        return 1;
+    }
+    puts("file sent");
+
+    int input = -1;
+    while (input) {
+
+        printf("Press 1 to resend the file or 0 to exit:\n");
+        scanf("%d", &input);
+        if (input == 1) {
+            bytes_sent = send(tcp_socket, data, SIZE_OF_FILE, 0);
+            if (bytes_sent <= 0) {
+                perror("send(2)");
+                close(tcp_socket);
+                free(data);
+                return 1;
+            }
         }
-     }else{
-        continue;
-     }
-     }}
+        else if (input != 0) {
+            printf("Invalid input\n");
+        }
+    }
 
-    
-    // Close the connection
+    bytes_sent = send(tcp_socket, "EXIT", 4, 0);
+    if (bytes_sent <= 0)
+    {
+        perror("send(2)");
+        close(tcp_socket);
+        free(data);
+
+        return 1;
+    }
+    printf("Exit message sent to the reciever\n")
     close(tcp_socket);
-
-    // Free allocated memory
     free(data);
-    printf("Sender ends\n");
-
     return 0;
 }

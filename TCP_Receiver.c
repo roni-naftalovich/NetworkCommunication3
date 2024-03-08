@@ -76,12 +76,12 @@ int main(int argsc, char **argsv) {
         return -1;
     }
 
-     int yes = 1;
-     if(setsockopt(tcp_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1){
-     perror("setsockopt");
-     close(tcp_socket);
-     return -1;
-    }
+    //  int yes = 1;
+    //  if(setsockopt(tcp_socket, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == -1){
+    //  perror("setsockopt");
+    //  close(tcp_socket);
+    //  return -1;
+    // }
 
     if (setsockopt(tcp_socket, IPPROTO_TCP, TCP_CONGESTION, tcp_algo, strlen(tcp_algo)) != 0) {
     printf("Failed to set TCP congestion control algorithm\n");
@@ -116,21 +116,24 @@ int main(int argsc, char **argsv) {
    ssize_t bytes_received= 0;
    int updatenumoftry = 0;
    clock_t start_time;
-   while(numoftry< MAX_TRY){
-   if (numoftry==updatenumoftry)
-   {
-   start_time = clock(); // Start measuring time
-   }
-   
+   double sumOfTimes= 0;
+   double sumOfSpeed=0;
    client_socket= accept(tcp_socket,(struct sockaddr *)&sender_addr, ( socklen_t *)&sender_addr_len);
    if(client_socket < 0){
     printf("Accepting failed");
     close(tcp_socket);
     return -1;
+
+    printf("Connection established with the sender.\n");
+   }
+   while(numoftry< MAX_TRY){
+   if (numoftry==updatenumoftry)
+   {
+   start_time = clock(); // Start measuring time
    }
 
-   printf("Connection established with the sender.\n");
    char infobuffer[SIZE_OF_FILE]= {0};
+   char copy[SIZE_OF_FILE]= {0};
    ssize_t bytes = recv(client_socket, infobuffer, SIZE_OF_FILE, 0);
         if (bytes < 0) {
             printf("Receiving data failed");
@@ -138,38 +141,41 @@ int main(int argsc, char **argsv) {
             close(tcp_socket);
             return -1;
         }
-        
         bytes_received+= bytes;
         //if (bytes_received == SIZE_OF_FILE)
        // {
-        clock_t end_time = clock();
-        printf("----------------------------------\n");
-        printf("-           * Statistics *       -\n");
-        printf("run number %d :\n" , numoftry);
-        // Calculate the time taken to receive the file
-        double time_taken = (((double)(end_time - start_time)) / CLOCKS_PER_SEC)* 1000;
-        printf("Time taken to receive the file: %lf ms\n", time_taken);
-        // Calculate average bandwidth
-        double average_bandwidth = (SIZE_OF_FILE / time_taken)/1000 / 1024; // in KB/s
-        printf("Average bandwidth: %lf KB/s\n", average_bandwidth);
-       // }
-       
+        
+        
+
 
         if (strcmp(infobuffer, "EXIT") == 0) {
         break;
         }
+        strcpy(copy, infobuffer);
+        memset(infobuffer, '\0', sizeof(infobuffer));
 
-       if (bytes_received< SIZE_OF_FILE)
+        if (bytes_received< SIZE_OF_FILE)
         {
             updatenumoftry++;
             continue;
         }
+        clock_t end_time = clock();
+    printf("----------------------------------\n");
+        printf("-           * Statistics *       -\n");
+        printf("run number %d :\n" , numoftry);
+        // Calculate the time taken to receive the file
+        double time_taken = (((double)(end_time - start_time)) / CLOCKS_PER_SEC)* 1000;
+        sumOfTimes+=time_taken;
+        sumOfSpeed+= (SIZE_OF_FILE/time_taken)/1000;
+        printf("Time taken to receive the file: %lf ms\n", time_taken);
         
     numoftry++;
     updatenumoftry=numoftry;
     }
    
    printf("Exit message sent from sender\n");
+   double average_bandwidth = (sumOfSpeed / sumOfTimes)*1000 / 1024 ; // in MB/s
+   printf("Average bandwidth: %lf MB/s\n", average_bandwidth);
 
     // Close the sockets
     close(client_socket);
