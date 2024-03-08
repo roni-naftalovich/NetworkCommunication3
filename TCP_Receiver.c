@@ -118,22 +118,23 @@ int main(int argsc, char **argsv) {
    clock_t start_time;
    double sumOfTimes= 0;
    double sumOfSpeed=0;
+   char infobuffer[SIZE_OF_FILE]= {0};
+   char copy[SIZE_OF_FILE]= {0};
+
    client_socket= accept(tcp_socket,(struct sockaddr *)&sender_addr, ( socklen_t *)&sender_addr_len);
    if(client_socket < 0){
     printf("Accepting failed");
     close(tcp_socket);
     return -1;
-
-    printf("Connection established with the sender.\n");
    }
+    printf("Connection established with the sender.\n");
+   
    while(numoftry< MAX_TRY){
    if (numoftry==updatenumoftry)
    {
    start_time = clock(); // Start measuring time
    }
 
-   char infobuffer[SIZE_OF_FILE]= {0};
-   char copy[SIZE_OF_FILE]= {0};
    ssize_t bytes = recv(client_socket, infobuffer, SIZE_OF_FILE, 0);
         if (bytes < 0) {
             printf("Receiving data failed");
@@ -154,23 +155,25 @@ int main(int argsc, char **argsv) {
         strcpy(copy, infobuffer);
         memset(infobuffer, '\0', sizeof(infobuffer));
 
-        if (bytes_received< SIZE_OF_FILE)
-        {
+          if (bytes_received < SIZE_OF_FILE) {
             updatenumoftry++;
             continue;
         }
+
         clock_t end_time = clock();
-    printf("----------------------------------\n");
+        printf("----------------------------------\n");
         printf("-           * Statistics *       -\n");
-        printf("run number %d :\n" , numoftry);
+        printf("run number %d :\n", numoftry);
+
         // Calculate the time taken to receive the file
-        double time_taken = (((double)(end_time - start_time)) / CLOCKS_PER_SEC)* 1000;
-        sumOfTimes+=time_taken;
-        sumOfSpeed+= (SIZE_OF_FILE/time_taken)/1000;
+        double time_taken = (((double)(end_time - start_time)) / CLOCKS_PER_SEC) * 1000;
+        sumOfTimes += time_taken;
+        sumOfSpeed += (SIZE_OF_FILE / time_taken) / 1000;
         printf("Time taken to receive the file: %lf ms\n", time_taken);
-        
-    numoftry++;
-    updatenumoftry=numoftry;
+
+        bytes_received = 0;
+        numoftry++;
+        updatenumoftry = numoftry;
     }
    
    printf("Exit message sent from sender\n");

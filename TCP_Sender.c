@@ -156,7 +156,7 @@ if (setsockopt(tcp_socket, IPPROTO_TCP, TCP_CONGESTION, tcp_algo, strlen(tcp_alg
 
         return 1;
     }
-    puts("file sent");
+    printf("file sent\n");
 
     int input = -1;
     while (input) {
@@ -186,7 +186,7 @@ if (setsockopt(tcp_socket, IPPROTO_TCP, TCP_CONGESTION, tcp_algo, strlen(tcp_alg
 
         return 1;
     }
-    printf("Exit message sent to the reciever\n")
+    printf("Exit message sent to the reciever\n");
     close(tcp_socket);
     free(data);
     return 0;
