@@ -73,7 +73,7 @@ int main(int args, char** argv) {
 
     int total_bytes_received = 0;
     int bytes_received=0;
-    int counter = 0;
+    int numofrun = 0;
     int packages_received = 0;
     double speed_sum = 0.0;
     double time_sum = 0.0;
@@ -87,7 +87,7 @@ int main(int args, char** argv) {
 
     while(1){
         bytes_received=0;
-        counter = 0;
+        numofrun = 0;
         total_bytes_received = 0;
         memset(buffer, 0, BUFFER_SIZE);
 
@@ -100,7 +100,7 @@ int main(int args, char** argv) {
                 close(sock);
                 return 1;
             }
-            if(counter == 0){
+            if(numofrun == 0){
                 gettimeofday(&start, NULL);
             }
             if (bytes_received == -2) {
@@ -108,7 +108,7 @@ int main(int args, char** argv) {
                 break;
             }
             total_bytes_received += bytes_received;
-            counter++;
+            numofrun++;
             memset(buffer, 0, sizeof(buffer));
 
 
@@ -120,15 +120,15 @@ int main(int args, char** argv) {
         }
 
 
-        fprintf(stdout, "File transfer complete\n");
-        double this_elapsed_time = ((end.tv_sec - start.tv_sec) * 1000.0) + ((end.tv_usec - start.tv_usec) / 1000.0);
-        double this_speed = (total_bytes_received / 1024.0 / 1024.0) / (this_elapsed_time / 1000.0);
-        speed_sum = speed_sum + this_speed;
-        time_sum = time_sum + this_elapsed_time;
+        printf("File transfer complete\n");
+        double time_taken = ((end.tv_sec - start.tv_sec) * 1000.0) + ((end.tv_usec - start.tv_usec) / 1000.0);
+        double speed_taken = (total_bytes_received / 1024.0 / 1024.0) / (time_taken / 1000.0);
+        speed_sum = speed_sum + speed_taken;
+        time_sum = time_sum + time_taken;
 
         packages_received++;
 
-        fprintf(stats_file, "- Run #%d Data: Time = %.2f ms; Speed = %.2f MB/s\n", packages_received, this_elapsed_time, this_speed);
+        fprintf(stats_file, "Run number %d :\n Time = %.2f ms; Speed = %.2f MB/s\n", packages_received, time_taken, speed_taken);
 
         // Print the sent message.
         printf( "waiting for the Senders response...\n");
@@ -137,7 +137,7 @@ int main(int args, char** argv) {
 
     close(sock);
     printf("closed the client socket\n");
-    // ... (Print statistics and times)
+    //Print statistics
     printf("----------------------------------\n");
     printf("-           * Statistics *       -\n");
     stats_file = fopen(FILENAME, "r");
@@ -149,9 +149,9 @@ int main(int args, char** argv) {
     while (fgets(buffer, sizeof(buffer), stats_file) != NULL) {
         printf("%s", buffer);
     }
-    printf("-\n");
-    printf("- Average time: %.2fms\n", time_sum / packages_received);
-    printf("- Average bandwidth: %.2fMB/s\n", speed_sum / packages_received);
+    printf("\n");
+    printf(" Average time: %.2fms\n", time_sum / packages_received);
+    printf(" Average bandwidth: %.2fMB/s\n", speed_sum / packages_received);
     printf("----------------------------------\n");
     printf( "Receiver end.\n");
 

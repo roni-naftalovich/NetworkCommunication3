@@ -37,11 +37,11 @@ typedef struct _RUDP_PACKET {
 //}RUDP_SOCKET;
 
 
-int rudp_my_socket();
-int rudp_my_send(int sockfd, const RUDP_PACKET *rudp_packet);
-int rudp_my_sendto(int sockfd, const RUDP_PACKET *rudp_packet, struct sockaddr_in *dest_addr, socklen_t addrlen);
-int rudp_my_recv(int sockfd, RUDP_PACKET *rudp_packet);
-int rudp_my_recvfrom(int sockfd, RUDP_PACKET *rudp_packet, struct sockaddr_in *src_addr, socklen_t *addrlen);
+
+int basic_send(int sockfd, const RUDP_PACKET *rudp_packet);
+int basic_sendto(int sockfd, const RUDP_PACKET *rudp_packet, struct sockaddr_in *dest_addr, socklen_t addrlen);
+int basic_recv(int sockfd, RUDP_PACKET *rudp_packet);
+int basic_recvfrom(int sockfd, RUDP_PACKET *rudp_packet, struct sockaddr_in *src_addr, socklen_t *addrlen);
 int send_ack(int sockfd, struct sockaddr_in *src_addr, socklen_t addrlen, int seq_num);
 int rudp_connect(int sockfd, struct sockaddr_in *dest_addr, socklen_t addrlen);
 int rudp_accept(int sockfd, struct sockaddr_in *src_addr, socklen_t *addrlen);

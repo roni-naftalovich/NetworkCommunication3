@@ -42,7 +42,7 @@ int main(int args, char** argv){
     int port = DEFAULT_PORT;
 
     if (args != 5) {
-        printf("Invalid command, system use default port and ip\n");
+        printf("Invalid command, system using default port and ip\n");
     } else if (args == 5) {
         server_ip = argv[2];
         port = atoi(argv[4]);
@@ -74,20 +74,16 @@ int main(int args, char** argv){
         rudp_close(sock);
         return -1;
     }
-    fprintf(stdout, "Handshake succesfuly done, connected to the server!\n"
+    printf("Handshake succesfuly done, connected to the server!\n"
                     "Sending data to the server\n");
-//    if (setsockopt(sock, IPPROTO_TCP, TCP_CONGESTION, CC_algo, strlen(CC_algo)) < 0) {
-//        perror("setsockopt(2)");
-//        close(sock);
-//        return 1;
-//    }
+
     int bytes_sent = rudp_sendto(sock, data, SIZE_OF_FILE, (struct sockaddr_in *)&server, sizeof(server));
     if (bytes_sent < 0) {
         perror("rudp_sendto(2)");
         rudp_close(sock);
         return -1;
     }
-    fprintf(stdout, "data sent successfully!\n");
+    printf("data sent successfully!\n");
     while (1){
         printf("Press 1 to resend the data or 0 to exit\n");
         int choice;
@@ -113,17 +109,12 @@ int main(int args, char** argv){
                 rudp_close(sock);
                 return -1;
             }
-            fprintf(stdout, "data sent successfully!\n");
+            printf("data sent successfully!\n");
             bytes_sent=0;
         }
     }
     free(data);
-    fprintf(stdout, "Connection closed!\n");
-
-
-
-
-
+    printf("Connection closed\n");
 
 
 
